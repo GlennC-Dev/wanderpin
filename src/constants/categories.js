@@ -34,4 +34,11 @@ export const CATEGORIES = [
     color: '#FFEAA7',
     overpassQuery: 'shop=gift',
   },
+  {
+  id: 'hotels',
+  label: 'Hotels',
+  icon: '🏨',
+  color: '#B39DDB',
+  overpassQuery: 'tourism=hotel',
+  },
 ]

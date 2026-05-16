@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import MapContainer from './components/map/MapContainer'
 import Auth from './pages/Auth'
+import Navbar from './components/layout/Navbar'
 
 function App() {
   const [session, setSession] = useState(null)
@@ -37,7 +38,8 @@ function App() {
   if (!session) return <Auth />
 
   return (
-    <div style={{ height: '100vh', width: '100vw' }}>
+    <div style={{ height: '100vh', width: '100vw', position: 'relative' }}>
+      <Navbar session={session} />
       <MapContainer />
     </div>
   )

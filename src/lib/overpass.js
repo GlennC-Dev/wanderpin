@@ -1,5 +1,6 @@
 const OVERPASS_ENDPOINTS = [
   'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
   'https://overpass-api.de/api/interpreter',
 ]
@@ -23,7 +24,7 @@ export async function fetchPinsByCategory(category, lat, lng, radiusMeters = 100
         id: el.id,
         lat: el.lat,
         lng: el.lon,
-        name: el.tags?.name || el.tags?.['name:en'] || 'Unnamed',
+        name: el.tags?.['name:en'] || el.tags?.['name:zh-TW'] || el.tags?.name || 'Unnamed',
         category: category.id,
         tags: el.tags,
       }))

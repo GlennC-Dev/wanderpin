@@ -2,7 +2,7 @@ export default function CategoryToggle({ categories, active, onToggle }) {
   return (
     <div style={{
       position: 'absolute',
-      top: '16px',
+      top: '64px',
       left: '50%',
       transform: 'translateX(-50%)',
       zIndex: 1000,
