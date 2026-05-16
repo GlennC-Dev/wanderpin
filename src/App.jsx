@@ -7,7 +7,7 @@ import SetHomeBase from './components/onboarding/SetHomeBase'
 import { useHomeBase } from './hooks/useHomeBase'
 
 function AppInner({ session }) {
-  const { homeBase, loading, saveHomeBase } = useHomeBase(session.user.id)
+  const { homeBase, loading, saveHomeBase, clearHomeBase } = useHomeBase(session.user.id)
 
   if (loading) return (
     <div style={{
@@ -25,7 +25,7 @@ function AppInner({ session }) {
 
   return (
     <div style={{ height: '100vh', width: '100vw', position: 'relative' }}>
-      <Navbar session={session} />
+      <Navbar session={session} onResetHomeBase={clearHomeBase} />
       <MapContainer session={session} />
     </div>
   )

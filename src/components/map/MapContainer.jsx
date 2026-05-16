@@ -8,6 +8,16 @@ import CategoryLayer from './CategoryLayer'
 import CategoryToggle from '../ui/CategoryToggle'
 import { usePinState } from '../../hooks/usePinState'
 import { useHomeBase } from '../../hooks/useHomeBase'
+import { useMap } from 'react-leaflet'
+
+function RecenterMap({ lat, lng }) {
+  const map = useMap()
+  useEffect(() => {
+    map.setView([lat, lng], 15)
+  }, [lat, lng])
+  return null
+}
+
 
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -58,6 +68,7 @@ export default function MapContainer({ session }) {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <RecenterMap lat={anchor.lat} lng={anchor.lng} />
         <Marker
           position={[anchor.lat, anchor.lng]}
           icon={L.divIcon({

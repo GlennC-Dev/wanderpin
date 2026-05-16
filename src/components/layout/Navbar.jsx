@@ -1,6 +1,6 @@
 import { supabase } from '../../lib/supabase'
 
-export default function Navbar({ session }) {
+export default function Navbar({ session, onResetHomeBase }) {
   async function handleSignOut() {
     await supabase.auth.signOut()
   }
@@ -25,6 +25,21 @@ export default function Navbar({ session }) {
         <span style={{ fontSize: '14px', color: '#666' }}>
           {session?.user?.email}
         </span>
+        <button
+          onClick={onResetHomeBase}
+          style={{
+            background: '#f59e0b',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            padding: '6px 12px',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            fontSize: '13px',
+          }}
+        >
+          🏠 Change Base
+        </button>
         <button
           onClick={handleSignOut}
           style={{

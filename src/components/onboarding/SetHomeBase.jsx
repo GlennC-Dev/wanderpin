@@ -3,7 +3,7 @@ import { MapContainer as LeafletMap, TileLayer, Marker, Popup, useMapEvents } fr
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { fetchPinsByCategory } from '../../lib/overpass'
-import { CATEGORIES } from '../../constants/categories'
+import { TAIWAN_AIRPORTS } from '../../constants/regions'
 
 const HOTEL_CATEGORY = {
   id: 'hotels',
@@ -63,20 +63,22 @@ function createPickedIcon() {
 }
 
 export default function SetHomeBase({ onSave }) {
+  const [airport, setAirport] = useState(null)
   const [picked, setPicked] = useState(null)
   const [label, setLabel] = useState('')
   const [saving, setSaving] = useState(false)
   const [hotels, setHotels] = useState([])
-  const [loadingHotels, setLoadingHotels] = useState(true)
-
-  const CENTER = { lat: 25.0330, lng: 121.5654 }
+  const [loadingHotels, setLoadingHotels] = useState(false)
 
   useEffect(() => {
-    fetchPinsByCategory(HOTEL_CATEGORY, CENTER.lat, CENTER.lng, 3000)
+    if (!airport) return
+    setLoadingHotels(true)
+    setHotels([])
+    fetchPinsByCategory(HOTEL_CATEGORY, airport.lat, airport.lng, 10000)
       .then(setHotels)
       .catch(console.error)
       .finally(() => setLoadingHotels(false))
-  }, [])
+  }, [airport])
 
   function handlePick(lat, lng, name) {
     setPicked({ lat, lng })
@@ -89,6 +91,64 @@ export default function SetHomeBase({ onSave }) {
     await onSave(picked.lat, picked.lng, label || 'My Hotel')
   }
 
+  // Step 1 — Airport picker
+  if (!airport) return (
+    <div style={{
+      height: '100vh',
+      width: '100vw',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '16px',
+      padding: '24px',
+      background: '#f8fafc',
+    }}>
+      <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>
+        🗺️ WanderPin
+      </h2>
+      <p style={{ color: '#666', margin: 0, fontSize: '16px' }}>
+        Where are you flying into?
+      </p>
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+        width: '100%',
+        maxWidth: '400px',
+        maxHeight: '60vh',
+        overflowY: 'auto',
+      }}>
+        {TAIWAN_AIRPORTS.map((ap) => (
+          <button
+            key={ap.id}
+            onClick={() => setAirport(ap)}
+            style={{
+              padding: '14px 20px',
+              background: 'white',
+              border: '2px solid #e5e7eb',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              fontSize: '15px',
+              fontWeight: 'bold',
+              textAlign: 'left',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+            }}
+          >
+            <span style={{ fontSize: '24px' }}>✈️</span>
+            <div>
+              <div>{ap.name}</div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+
+  // Step 2 — Hotel picker
   return (
     <div style={{
       height: '100vh',
@@ -101,21 +161,38 @@ export default function SetHomeBase({ onSave }) {
         background: 'white',
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         zIndex: 1000,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
       }}>
-        <h2 style={{ margin: '0 0 4px', fontSize: '20px', fontWeight: 'bold' }}>
-          🏠 Set Your Home Base
-        </h2>
-        <p style={{ margin: '0', color: '#666', fontSize: '14px' }}>
-          {loadingHotels
-            ? 'Loading hotels...'
-            : 'Tap a 🏨 hotel pin to set it as your home base, or tap anywhere on the map.'}
-        </p>
+        <button
+          onClick={() => { setAirport(null); setPicked(null); setLabel('') }}
+          style={{
+            background: 'none',
+            border: 'none',
+            fontSize: '20px',
+            cursor: 'pointer',
+            padding: 0,
+          }}
+        >
+          ←
+        </button>
+        <div>
+          <h2 style={{ margin: '0 0 2px', fontSize: '18px', fontWeight: 'bold' }}>
+            🏠 Set Your Home Base
+          </h2>
+          <p style={{ margin: 0, color: '#666', fontSize: '13px' }}>
+            {loadingHotels
+              ? 'Loading hotels near ' + airport.name + '...'
+              : 'Tap a 🏨 hotel pin or anywhere on the map'}
+          </p>
+        </div>
       </div>
 
       <div style={{ flex: 1, position: 'relative' }}>
         <LeafletMap
-          center={[CENTER.lat, CENTER.lng]}
-          zoom={14}
+          center={[airport.lat, airport.lng]}
+          zoom={13}
           style={{ height: '100%', width: '100%' }}
         >
           <TileLayer

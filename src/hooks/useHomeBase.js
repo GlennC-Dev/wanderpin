@@ -33,7 +33,7 @@ export function useHomeBase(userId) {
     })
 }, [userId])
 
-  async function saveHomeBase(lat, lng, label) {
+async function saveHomeBase(lat, lng, label) {
   setHomeBase({ lat, lng, label })
   const { data, error } = await supabase
     .from('profiles')
@@ -43,5 +43,12 @@ export function useHomeBase(userId) {
   else console.log('saveHomeBase success:', data)
 }
 
-  return { homeBase, loading, saveHomeBase, DEFAULT_HOME_BASE }
+async function clearHomeBase() {
+  setHomeBase(null)
+  await supabase
+    .from('profiles')
+    .upsert({ id: userId, home_base_lat: null, home_base_lng: null, home_base_label: null })
+}
+
+return { homeBase, loading, saveHomeBase, clearHomeBase, DEFAULT_HOME_BASE }
 }
