@@ -7,6 +7,7 @@ import { CATEGORIES } from '../../constants/categories'
 import CategoryLayer from './CategoryLayer'
 import CategoryToggle from '../ui/CategoryToggle'
 import { usePinState } from '../../hooks/usePinState'
+import { useHomeBase } from '../../hooks/useHomeBase'
 
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -15,28 +16,31 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 })
 
-const HOME_BASE = {
-  lat: 25.0330,
-  lng: 121.5654,
-  label: 'Taipei Main Station'
-}
-
-export default function MapContainer() {
+export default function MapContainer({ session }) {
   const [activeCategories, setActiveCategories] = useState([])
-  const [userId, setUserId] = useState(null)
+  const userId = session?.user?.id
   const { pinStates, setPinState } = usePinState(userId)
+  const { homeBase, loading, saveHomeBase, DEFAULT_HOME_BASE } = useHomeBase(userId)
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUserId(session?.user?.id || null)
-    })
-  }, [])
+  const anchor = homeBase || DEFAULT_HOME_BASE
 
   function handleToggle(id) {
     setActiveCategories((prev) =>
       prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
     )
   }
+
+  if (loading) return (
+    <div style={{
+      height: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '24px'
+    }}>
+      🗺️ Loading...
+    </div>
+  )
 
   return (
     <div style={{ position: 'relative', height: '100%', width: '100%' }}>
@@ -46,7 +50,7 @@ export default function MapContainer() {
         onToggle={handleToggle}
       />
       <LeafletMap
-        center={[HOME_BASE.lat, HOME_BASE.lng]}
+        center={[anchor.lat, anchor.lng]}
         zoom={15}
         style={{ height: '100%', width: '100%' }}
       >
@@ -55,7 +59,7 @@ export default function MapContainer() {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <Marker
-          position={[HOME_BASE.lat, HOME_BASE.lng]}
+          position={[anchor.lat, anchor.lng]}
           icon={L.divIcon({
             html: `<div style="
               background: #1d4ed8;
@@ -74,14 +78,14 @@ export default function MapContainer() {
             iconAnchor: [18, 18],
           })}
         >
-  <Popup>🏠 Home Base — {HOME_BASE.label}</Popup>
-</Marker>
+          <Popup>🏠 {anchor.label}</Popup>
+        </Marker>
         {CATEGORIES.filter((c) => activeCategories.includes(c.id)).map((cat) => (
           <CategoryLayer
             key={cat.id}
             category={cat}
-            lat={HOME_BASE.lat}
-            lng={HOME_BASE.lng}
+            lat={anchor.lat}
+            lng={anchor.lng}
             pinStates={pinStates}
             onSetPinState={setPinState}
           />
