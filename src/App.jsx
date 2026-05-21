@@ -5,9 +5,23 @@ import Auth from './pages/Auth'
 import Navbar from './components/layout/Navbar'
 import SetHomeBase from './components/onboarding/SetHomeBase'
 import { useHomeBase } from './hooks/useHomeBase'
+import { Paths } from './pages/Paths'
 
 function AppInner({ session }) {
   const { homeBase, loading, saveHomeBase, clearHomeBase } = useHomeBase(session.user.id)
+  const [activeTab, setActiveTab] = useState('map')
+  const [activePath, setActivePath] = useState(null)
+  const [isEditingPath, setIsEditingPath] = useState(false)
+
+  function handleEditPath(path) {
+    setActivePath(path)
+    setIsEditingPath(true)
+    setActiveTab('map')
+  }
+
+  function handleDoneEditing() {
+    setIsEditingPath(false)
+  }
 
   if (loading) return (
     <div style={{
@@ -25,8 +39,31 @@ function AppInner({ session }) {
 
   return (
     <div style={{ height: '100vh', width: '100vw', position: 'relative' }}>
-      <Navbar session={session} onResetHomeBase={clearHomeBase} />
-      <MapContainer session={session} />
+      <Navbar
+        session={session}
+        onResetHomeBase={clearHomeBase}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isEditingPath={isEditingPath}
+        activePath={activePath}
+        onDoneEditing={handleDoneEditing}
+      />
+      {activeTab === 'map' && (
+        <MapContainer
+          session={session}
+          isEditingPath={isEditingPath}
+          activePath={activePath}
+          setActivePath={setActivePath}
+        />
+      )}
+      {activeTab === 'paths' && (
+        <Paths
+          user={session.user}
+          activePath={activePath}
+          setActivePath={setActivePath}
+          onEditPath={handleEditPath}
+        />
+      )}
     </div>
   )
 }
