@@ -28,6 +28,7 @@ L.Icon.Default.mergeOptions({
 
 export default function MapContainer({ session, isEditingPath, activePath, setActivePath }) {
   const [activeCategories, setActiveCategories] = useState([])
+  const [previewPath, setPreviewPath] = useState(null)
   const userId = session?.user?.id
   const { pinStates, setPinState } = usePinState(userId)
   const { homeBase, loading, DEFAULT_HOME_BASE } = useHomeBase(userId)
@@ -38,10 +39,23 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
 
   const anchor = homeBase || DEFAULT_HOME_BASE
 
+  // the path to draw on map — edit mode takes priority over preview
+  const displayedPath = isEditingPath ? activePath : previewPath
+
   function handleToggle(id) {
     setActiveCategories((prev) =>
       prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
     )
+  }
+
+  function handlePreviewSelect(e) {
+    const selectedId = e.target.value
+    if (!selectedId) {
+      setPreviewPath(null)
+      return
+    }
+    const found = paths.find(p => p.id === selectedId)
+    setPreviewPath(found || null)
   }
 
   async function handleAddToPath(path, pin) {
@@ -57,7 +71,6 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
       label: null
     })
     await fetchPaths()
-    // update activePath stops locally so map reflects immediately
     setActivePath(prev => prev ? {
       ...prev,
       path_stops: [
@@ -119,6 +132,37 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
         active={activeCategories}
         onToggle={handleToggle}
       />
+
+      {/* Path preview dropdown — top right, hidden in edit mode */}
+      {!isEditingPath && paths.length > 0 && (
+        <div style={{
+          position: 'absolute',
+          top: '60px',
+          right: '12px',
+          zIndex: 1000,
+        }}>
+          <select
+            value={previewPath?.id || ''}
+            onChange={handlePreviewSelect}
+            style={{
+              padding: '6px 10px',
+              borderRadius: '8px',
+              border: 'none',
+              backgroundColor: 'rgba(15,23,42,0.9)',
+              color: '#fff',
+              fontSize: '13px',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+              backdropFilter: 'blur(4px)'
+            }}
+          >
+            <option value=''>No Path Selected</option>
+            {paths.map(p => (
+              <option key={p.id} value={p.id}>{p.title}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* New path modal */}
       {showNewPathModal && (
@@ -239,10 +283,10 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
           />
         ))}
 
-        {/* Draw active path on map */}
-        {activePath && (
+        {/* Draw path on map — edit mode or preview */}
+        {displayedPath && (
           <PathLayer
-            path={activePath}
+            path={displayedPath}
             onRemoveStop={isEditingPath ? (stop) => handleRemoveFromPath(activePath, { id: stop.osm_id }) : null}
           />
         )}

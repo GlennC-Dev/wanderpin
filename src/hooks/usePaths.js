@@ -72,16 +72,24 @@ export function usePaths(user) {
   }
 
   async function deleteStop(stopId) {
-  const { error } = await supabase
-    .from('path_stops')
-    .delete()
-    .eq('id', stopId)
+    const { error } = await supabase
+      .from('path_stops')
+      .delete()
+      .eq('id', stopId)
 
-  if (!error) await fetchPaths()
-  return { error }
-}
+    if (!error) await fetchPaths()
+    return { error }
+  }
 
+  async function renamePath(pathId, newTitle) {
+    const { error } = await supabase
+      .from('paths')
+      .update({ title: newTitle })
+      .eq('id', pathId)
 
-  return { paths, loading, createPath, deletePath, fetchPaths, deleteStop }
+    if (!error) await fetchPaths()
+    return { error }
+  }
 
+  return { paths, loading, createPath, deletePath, fetchPaths, deleteStop, renamePath }
 }

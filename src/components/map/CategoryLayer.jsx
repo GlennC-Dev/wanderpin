@@ -224,7 +224,7 @@ export default function CategoryLayer({ category, lat, lng, pinStates, onSetPinS
                       </div>
                     ) : (
                       <button
-                        onClick={() => setAddingPin(pin.id)}
+                        onClick={(e) => { e.stopPropagation(); setAddingPin(pin.id) }}
                         style={{
                           width: '100%',
                           padding: '6px',

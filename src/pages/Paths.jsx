@@ -3,10 +3,12 @@ import { usePaths } from '../hooks/usePaths'
 import { PathCard } from '../components/ui/PathCard'
 
 export function Paths({ user, activePath, setActivePath, onEditPath }) {
-  const { paths, loading, createPath, deletePath, deleteStop } = usePaths(user)
+  const { paths, loading, createPath, deletePath, deleteStop, renamePath } = usePaths(user)
   const [building, setBuilding] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newDescription, setNewDescription] = useState('')
+  const [renamingId, setRenamingId] = useState(null)
+  const [renameValue, setRenameValue] = useState('')
 
   function handleSelect(path) {
     setActivePath(prev => prev?.id === path.id ? null : path)
@@ -34,11 +36,18 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
   async function handleDeleteStop(stopId) {
     if (!confirm('Remove this stop?')) return
     await deleteStop(stopId)
-    // update activePath locally so detail panel reflects immediately
     setActivePath(prev => prev ? {
       ...prev,
       path_stops: prev.path_stops.filter(s => s.id !== stopId)
     } : prev)
+  }
+
+  async function handleRename(pathId) {
+    if (!renameValue.trim()) return
+    await renamePath(pathId, renameValue.trim())
+    setActivePath(prev => prev?.id === pathId ? { ...prev, title: renameValue.trim() } : prev)
+    setRenamingId(null)
+    setRenameValue('')
   }
 
   const selectedPath = paths.find(p => p.id === activePath?.id) || null
@@ -51,8 +60,8 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
         width: '300px',
         backgroundColor: '#0f172a',
         color: '#fff',
-        padding: '16px',
-        overflowY: 'auto',
+        padding: '60px 16px 16px 16px',
+        overflowY: 'scroll',
         flexShrink: 0
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -139,18 +148,92 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
         ))}
       </div>
 
-      {/* Detail panel — shows when a path is selected */}
+      {/* Detail panel */}
       {selectedPath ? (
         <div style={{
           width: '300px',
           backgroundColor: '#1e293b',
           color: '#fff',
-          padding: '16px',
+          padding: '60px 16px 16px 16px',
           overflowY: 'auto',
           flexShrink: 0,
           borderLeft: '1px solid #334155'
         }}>
-          <h3 style={{ margin: '0 0 4px 0', fontSize: '16px' }}>{selectedPath.title}</h3>
+
+          {/* Title / rename */}
+          {renamingId === selectedPath.id ? (
+            <div style={{ marginBottom: '12px' }}>
+              <input
+                value={renameValue}
+                onChange={e => setRenameValue(e.target.value)}
+                autoFocus
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: '#0f172a',
+                  color: '#fff',
+                  marginBottom: '8px',
+                  boxSizing: 'border-box',
+                  fontSize: '15px',
+                  fontWeight: 'bold'
+                }}
+              />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => handleRename(selectedPath.id)}
+                  style={{
+                    flex: 1,
+                    padding: '6px',
+                    backgroundColor: '#22c55e',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => { setRenamingId(null); setRenameValue('') }}
+                  style={{
+                    flex: 1,
+                    padding: '6px',
+                    backgroundColor: '#334155',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '12px'
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <h3 style={{ margin: 0, fontSize: '16px', flex: 1 }}>{selectedPath.title}</h3>
+              <button
+                onClick={() => { setRenamingId(selectedPath.id); setRenameValue(selectedPath.title) }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  padding: '2px 6px',
+                  borderRadius: '4px'
+                }}
+              >
+                ✏️
+              </button>
+            </div>
+          )}
+
           {selectedPath.description && (
             <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: '#94a3b8' }}>
               {selectedPath.description}
