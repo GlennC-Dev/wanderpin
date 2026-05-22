@@ -1,6 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePaths } from '../hooks/usePaths'
 import { PathCard } from '../components/ui/PathCard'
+import { MapContainer as LeafletMap, TileLayer, Polyline, Marker, Popup, useMap } from 'react-leaflet'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+
+function FlyToStop({ stop }) {
+  const map = useMap()
+  useEffect(() => {
+    if (stop) map.flyTo([stop.lat, stop.lng], 16, { duration: 0.8 })
+  }, [stop])
+  return null
+}
 
 export function Paths({ user, activePath, setActivePath, onEditPath }) {
   const { paths, loading, createPath, deletePath, deleteStop, renamePath } = usePaths(user)
@@ -9,9 +20,11 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
   const [newDescription, setNewDescription] = useState('')
   const [renamingId, setRenamingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
+  const [selectedStop, setSelectedStop] = useState(null)
 
   function handleSelect(path) {
     setActivePath(prev => prev?.id === path.id ? null : path)
+    setSelectedStop(null)
   }
 
   async function handleCreate() {
@@ -40,6 +53,7 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
       ...prev,
       path_stops: prev.path_stops.filter(s => s.id !== stopId)
     } : prev)
+    if (selectedStop?.id === stopId) setSelectedStop(null)
   }
 
   async function handleRename(pathId) {
@@ -51,6 +65,14 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
   }
 
   const selectedPath = paths.find(p => p.id === activePath?.id) || null
+
+  const sortedStops = selectedPath
+    ? [...(selectedPath.path_stops || [])].filter(s => s.lat && s.lng).sort((a, b) => a.stop_order - b.stop_order)
+    : []
+  const mapCenter = sortedStops.length > 0
+    ? [sortedStops[0].lat, sortedStops[0].lng]
+    : [25.0330, 121.5654]
+  const positions = sortedStops.map(s => [s.lat, s.lng])
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
@@ -292,24 +314,30 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
           {/* Stop list */}
           <div>
             <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Stops ({selectedPath.path_stops?.length || 0})
+              Stops ({sortedStops.length})
             </h4>
-            {selectedPath.path_stops?.length === 0 && (
+            {sortedStops.length === 0 && (
               <div style={{ fontSize: '12px', color: '#475569' }}>
                 No stops yet. Hit Edit Path to start adding pins!
               </div>
             )}
-            {[...(selectedPath.path_stops || [])].sort((a, b) => a.stop_order - b.stop_order).map((stop, index) => (
-              <div key={stop.id} style={{
-                padding: '8px',
-                marginBottom: '6px',
-                backgroundColor: '#0f172a',
-                borderRadius: '6px',
-                fontSize: '13px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}>
+            {sortedStops.map((stop, index) => (
+              <div
+                key={stop.id}
+                onClick={() => setSelectedStop(stop)}
+                style={{
+                  padding: '8px',
+                  marginBottom: '6px',
+                  backgroundColor: selectedStop?.id === stop.id ? '#1e3a5f' : '#0f172a',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  border: selectedStop?.id === stop.id ? '1px solid #3b82f6' : '1px solid transparent'
+                }}
+              >
                 <span>
                   <span style={{ color: '#3b82f6', fontWeight: 'bold', marginRight: '8px' }}>
                     {index + 1}
@@ -317,7 +345,7 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
                   {stop.name || stop.label || 'Unnamed stop'}
                 </span>
                 <button
-                  onClick={() => handleDeleteStop(stop.id)}
+                  onClick={(e) => { e.stopPropagation(); handleDeleteStop(stop.id) }}
                   style={{
                     background: 'none',
                     border: 'none',
@@ -347,6 +375,91 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
           Select a path to see details
         </div>
       )}
+
+      {/* Right panel — path preview map */}
+      <div style={{ flex: 1, position: 'relative' }}>
+        {selectedPath ? (
+          sortedStops.length > 0 ? (
+            <LeafletMap
+              key={selectedPath.id}
+              center={mapCenter}
+              zoom={14}
+              style={{ height: '100%', width: '100%' }}
+              zoomControl={false}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <FlyToStop stop={selectedStop} />
+              {positions.length > 1 && (
+                <Polyline
+                  positions={positions}
+                  pathOptions={{ color: '#3b82f6', weight: 3, opacity: 0.8, dashArray: '6, 6' }}
+                />
+              )}
+              {sortedStops.map((stop, index) => (
+                <Marker
+                  key={stop.id}
+                  position={[stop.lat, stop.lng]}
+                  icon={L.divIcon({
+                    html: `<div style="
+                      background: ${selectedStop?.id === stop.id ? '#ef4444' : '#3b82f6'};
+                      color: white;
+                      width: 24px;
+                      height: 24px;
+                      border-radius: 50%;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-size: 11px;
+                      font-weight: bold;
+                      border: 2px solid white;
+                      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                    ">${index + 1}</div>`,
+                    className: '',
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12],
+                  })}
+                >
+                  <Popup>
+                    <strong>Stop {index + 1}</strong><br />
+                    {stop.name || stop.label || 'Unnamed stop'}
+                  </Popup>
+                </Marker>
+              ))}
+            </LeafletMap>
+          ) : (
+            <div style={{
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#475569',
+              fontSize: '14px',
+              flexDirection: 'column',
+              gap: '8px'
+            }}>
+              <div style={{ fontSize: '32px' }}>📍</div>
+              <div>No stops yet — hit Edit Path to start building!</div>
+            </div>
+          )
+        ) : (
+          <div style={{
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#475569',
+            fontSize: '14px',
+            flexDirection: 'column',
+            gap: '8px'
+          }}>
+            <div style={{ fontSize: '32px' }}>🗺️</div>
+            <div>Select a path to preview it here</div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
