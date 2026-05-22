@@ -3,7 +3,7 @@ import { usePaths } from '../hooks/usePaths'
 import { PathCard } from '../components/ui/PathCard'
 
 export function Paths({ user, activePath, setActivePath, onEditPath }) {
-  const { paths, loading, createPath, deletePath } = usePaths(user)
+  const { paths, loading, createPath, deletePath, deleteStop } = usePaths(user)
   const [building, setBuilding] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newDescription, setNewDescription] = useState('')
@@ -29,6 +29,16 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
     if (!confirm('Delete this path?')) return
     if (activePath?.id === pathId) setActivePath(null)
     await deletePath(pathId)
+  }
+
+  async function handleDeleteStop(stopId) {
+    if (!confirm('Remove this stop?')) return
+    await deleteStop(stopId)
+    // update activePath locally so detail panel reflects immediately
+    setActivePath(prev => prev ? {
+      ...prev,
+      path_stops: prev.path_stops.filter(s => s.id !== stopId)
+    } : prev)
   }
 
   const selectedPath = paths.find(p => p.id === activePath?.id) || null
@@ -206,18 +216,38 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
                 No stops yet. Hit Edit Path to start adding pins!
               </div>
             )}
-            {[...( selectedPath.path_stops || [])].sort((a, b) => a.stop_order - b.stop_order).map((stop, index) => (
+            {[...(selectedPath.path_stops || [])].sort((a, b) => a.stop_order - b.stop_order).map((stop, index) => (
               <div key={stop.id} style={{
                 padding: '8px',
                 marginBottom: '6px',
                 backgroundColor: '#0f172a',
                 borderRadius: '6px',
-                fontSize: '13px'
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
               }}>
-                <span style={{ color: '#3b82f6', fontWeight: 'bold', marginRight: '8px' }}>
-                  {index + 1}
+                <span>
+                  <span style={{ color: '#3b82f6', fontWeight: 'bold', marginRight: '8px' }}>
+                    {index + 1}
+                  </span>
+                  {stop.name || stop.label || 'Unnamed stop'}
                 </span>
-                {stop.name || stop.label || 'Unnamed stop'}
+                <button
+                  onClick={() => handleDeleteStop(stop.id)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#ef4444',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    flexShrink: 0
+                  }}
+                >
+                  ✕
+                </button>
               </div>
             ))}
           </div>
