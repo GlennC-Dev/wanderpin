@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { MapContainer as LeafletMap, TileLayer, Marker, Popup } from 'react-leaflet'
+import { useState, useEffect, useRef } from 'react'
+import { MapContainer as LeafletMap, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { CATEGORIES } from '../../constants/categories'
@@ -11,11 +11,41 @@ import { useHomeBase } from '../../hooks/useHomeBase'
 import { usePaths } from '../../hooks/usePaths'
 import { useMap } from 'react-leaflet'
 
+const MIN_ZOOM_FOR_PINS = 13
+
 function RecenterMap({ lat, lng }) {
   const map = useMap()
   useEffect(() => {
     map.setView([lat, lng], 15)
   }, [lat, lng])
+  return null
+}
+
+function BoundsTracker({ onBoundsChange }) {
+  const map = useMapEvents({
+    moveend: () => updateBounds(),
+    zoomend: () => updateBounds(),
+  })
+  const debounceRef = useRef(null)
+
+  function updateBounds() {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      const zoom = map.getZoom()
+      if (zoom < MIN_ZOOM_FOR_PINS) {
+        onBoundsChange(null) // too zoomed out, stop loading pins
+        return
+      }
+      const b = map.getBounds()
+      onBoundsChange({
+        north: b.getNorth(),
+        south: b.getSouth(),
+        east: b.getEast(),
+        west: b.getWest(),
+      })
+    }, 800)
+  }
+
   return null
 }
 
@@ -29,6 +59,7 @@ L.Icon.Default.mergeOptions({
 export default function MapContainer({ session, isEditingPath, activePath, setActivePath }) {
   const [activeCategories, setActiveCategories] = useState([])
   const [previewPath, setPreviewPath] = useState(null)
+  const [bounds, setBounds] = useState(null)
   const userId = session?.user?.id
   const { pinStates, setPinState } = usePinState(userId)
   const { homeBase, loading, DEFAULT_HOME_BASE } = useHomeBase(userId)
@@ -38,8 +69,6 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
   const [newPathTitle, setNewPathTitle] = useState('')
 
   const anchor = homeBase || DEFAULT_HOME_BASE
-
-  // the path to draw on map — edit mode takes priority over preview
   const displayedPath = isEditingPath ? activePath : previewPath
 
   function handleToggle(id) {
@@ -133,7 +162,7 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
         onToggle={handleToggle}
       />
 
-      {/* Path preview dropdown — top right, hidden in edit mode */}
+      {/* Path preview dropdown */}
       {!isEditingPath && paths.length > 0 && (
         <div style={{
           position: 'absolute',
@@ -243,6 +272,8 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <RecenterMap lat={anchor.lat} lng={anchor.lng} />
+        <BoundsTracker onBoundsChange={setBounds} />
+
         <Marker
           position={[anchor.lat, anchor.lng]}
           icon={L.divIcon({
@@ -272,6 +303,7 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
             category={cat}
             lat={anchor.lat}
             lng={anchor.lng}
+            bounds={bounds}
             pinStates={pinStates}
             onSetPinState={setPinState}
             isEditingPath={isEditingPath}
@@ -283,7 +315,6 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
           />
         ))}
 
-        {/* Draw path on map — edit mode or preview */}
         {displayedPath && (
           <PathLayer
             path={displayedPath}

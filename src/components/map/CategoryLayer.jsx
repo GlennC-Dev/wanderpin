@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
-import { fetchPinsByCategory } from '../../lib/overpass'
+import { fetchPinsByCategory, fetchPinsByBounds } from '../../lib/overpass'
 
 function createCategoryIcon(category, state) {
   const opacity = state === 'visited' ? 0.4 : 1
@@ -36,29 +36,58 @@ function createCategoryIcon(category, state) {
   })
 }
 
-export default function CategoryLayer({ category, lat, lng, pinStates, onSetPinState, isEditingPath, activePath, paths, onAddToPath, onCreateAndAddToPath, onRemoveFromPath }) {
+function boundsToKey(bounds) {
+  return `${bounds.north.toFixed(3)},${bounds.south.toFixed(3)},${bounds.east.toFixed(3)},${bounds.west.toFixed(3)}`
+}
+
+export default function CategoryLayer({ category, lat, lng, bounds, pinStates, onSetPinState, isEditingPath, activePath, paths, onAddToPath, onCreateAndAddToPath, onRemoveFromPath }) {
   const [pins, setPins] = useState([])
   const [loading, setLoading] = useState(true)
   const [addingPin, setAddingPin] = useState(null)
-  const cache = useRef(null)
+  const boundsCache = useRef({}) // keyed by bounds string
+  const fetchedBoundsKeys = useRef(new Set())
 
   useEffect(() => {
-    if (cache.current) {
-      setPins(cache.current)
-      setLoading(false)
-      return
-    }
-    setLoading(true)
-    fetchPinsByCategory(category, lat, lng, 1000)
-      .then((data) => {
-        cache.current = data
-        setPins(data)
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false))
-  }, [category.id, lat, lng])
+    if (bounds) {
+      const key = boundsToKey(bounds)
 
-  if (loading) return (
+      // already fetched this region — merge any new pins
+      if (fetchedBoundsKeys.current.has(key)) return
+
+      fetchedBoundsKeys.current.add(key)
+      setLoading(true)
+
+      fetchPinsByBounds(category, bounds)
+        .then((data) => {
+          boundsCache.current[key] = data
+          // merge all cached regions, dedupe by pin id
+          const allPins = Object.values(boundsCache.current).flat()
+          const unique = Array.from(new Map(allPins.map(p => [p.id, p])).values())
+          setPins(unique)
+        })
+        .catch(console.error)
+        .finally(() => setLoading(false))
+    } else {
+      // fallback — radius from home base (execution mode)
+      const fallbackKey = `radius:${lat},${lng}`
+      if (fetchedBoundsKeys.current.has(fallbackKey)) return
+
+      fetchedBoundsKeys.current.add(fallbackKey)
+      setLoading(true)
+
+      fetchPinsByCategory(category, lat, lng, 1000)
+        .then((data) => {
+          boundsCache.current[fallbackKey] = data
+          const allPins = Object.values(boundsCache.current).flat()
+          const unique = Array.from(new Map(allPins.map(p => [p.id, p])).values())
+          setPins(unique)
+        })
+        .catch(console.error)
+        .finally(() => setLoading(false))
+    }
+  }, [bounds, category.id, lat, lng])
+
+  if (loading && pins.length === 0) return (
     <div style={{
       position: 'absolute',
       bottom: '24px',
