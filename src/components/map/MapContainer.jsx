@@ -1,17 +1,27 @@
 import { useState, useEffect, useRef } from 'react'
-import { MapContainer as LeafletMap, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet'
+import { MapContainer as LeafletMap, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { CATEGORIES } from '../../constants/categories'
 import CategoryLayer from './CategoryLayer'
 import CategoryToggle from '../ui/CategoryToggle'
 import PathLayer from './PathLayer'
+import SearchBar from '../ui/SearchBar'
 import { usePinState } from '../../hooks/usePinState'
 import { useHomeBase } from '../../hooks/useHomeBase'
 import { usePaths } from '../../hooks/usePaths'
-import { useMap } from 'react-leaflet'
 
 const MIN_ZOOM_FOR_PINS = 13
+
+const TILE_DARK = {
+  url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
+}
+
+const TILE_LIGHT = {
+  url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+}
 
 function RecenterMap({ lat, lng }) {
   const map = useMap()
@@ -33,7 +43,7 @@ function BoundsTracker({ onBoundsChange }) {
     debounceRef.current = setTimeout(() => {
       const zoom = map.getZoom()
       if (zoom < MIN_ZOOM_FOR_PINS) {
-        onBoundsChange(null) // too zoomed out, stop loading pins
+        onBoundsChange(null)
         return
       }
       const b = map.getBounds()
@@ -60,6 +70,7 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
   const [activeCategories, setActiveCategories] = useState([])
   const [previewPath, setPreviewPath] = useState(null)
   const [bounds, setBounds] = useState(null)
+  const [isDark, setIsDark] = useState(true)
   const userId = session?.user?.id
   const { pinStates, setPinState } = usePinState(userId)
   const { homeBase, loading, DEFAULT_HOME_BASE } = useHomeBase(userId)
@@ -70,6 +81,7 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
 
   const anchor = homeBase || DEFAULT_HOME_BASE
   const displayedPath = isEditingPath ? activePath : previewPath
+  const tile = isDark ? TILE_DARK : TILE_LIGHT
 
   function handleToggle(id) {
     setActiveCategories((prev) =>
@@ -79,10 +91,7 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
 
   function handlePreviewSelect(e) {
     const selectedId = e.target.value
-    if (!selectedId) {
-      setPreviewPath(null)
-      return
-    }
+    if (!selectedId) { setPreviewPath(null); return }
     const found = paths.find(p => p.id === selectedId)
     setPreviewPath(found || null)
   }
@@ -160,7 +169,34 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
         categories={CATEGORIES}
         active={activeCategories}
         onToggle={handleToggle}
+        isDark={isDark}
       />
+
+      {/* Dark / Light mode toggle */}
+      <div style={{
+        position: 'absolute',
+        top: '12px',
+        right: '60px',
+        zIndex: 1000,
+      }}>
+        <button
+          onClick={() => setIsDark(prev => !prev)}
+          style={{
+            padding: '6px 12px',
+            borderRadius: '8px',
+            border: 'none',
+            backgroundColor: isDark ? 'rgba(255,255,255,0.9)' : 'rgba(15,23,42,0.85)',
+            color: isDark ? '#0f172a' : '#f1f5f9',
+            fontSize: '13px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+            backdropFilter: 'blur(4px)',
+          }}
+        >
+          {isDark ? '☀️ Light' : '🌙 Dark'}
+        </button>
+      </div>
 
       {/* Path preview dropdown */}
       {!isEditingPath && paths.length > 0 && (
@@ -177,8 +213,8 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
               padding: '6px 10px',
               borderRadius: '8px',
               border: 'none',
-              backgroundColor: 'rgba(15,23,42,0.9)',
-              color: '#fff',
+              backgroundColor: isDark ? 'rgba(15,23,42,0.9)' : 'rgba(255,255,255,0.9)',
+              color: isDark ? '#fff' : '#0f172a',
               fontSize: '13px',
               cursor: 'pointer',
               boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
@@ -230,14 +266,8 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
             <button
               onClick={() => { setShowNewPathModal(false); setPendingPin(null) }}
               style={{
-                flex: 1,
-                padding: '8px',
-                borderRadius: '6px',
-                border: 'none',
-                backgroundColor: '#334155',
-                color: '#fff',
-                cursor: 'pointer',
-                fontSize: '13px'
+                flex: 1, padding: '8px', borderRadius: '6px', border: 'none',
+                backgroundColor: '#334155', color: '#fff', cursor: 'pointer', fontSize: '13px'
               }}
             >
               Cancel
@@ -245,15 +275,9 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
             <button
               onClick={handleConfirmNewPath}
               style={{
-                flex: 1,
-                padding: '8px',
-                borderRadius: '6px',
-                border: 'none',
-                backgroundColor: '#22c55e',
-                color: '#fff',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                fontSize: '13px'
+                flex: 1, padding: '8px', borderRadius: '6px', border: 'none',
+                backgroundColor: '#22c55e', color: '#fff', cursor: 'pointer',
+                fontWeight: 'bold', fontSize: '13px'
               }}
             >
               Create
@@ -268,11 +292,13 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          key={isDark ? 'dark' : 'light'}
+          attribution={tile.attribution}
+          url={tile.url}
         />
         <RecenterMap lat={anchor.lat} lng={anchor.lng} />
         <BoundsTracker onBoundsChange={setBounds} />
+        <SearchBar isDark={isDark} />
 
         <Marker
           position={[anchor.lat, anchor.lng]}
