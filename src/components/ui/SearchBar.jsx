@@ -46,8 +46,8 @@ export default function SearchBar({ isDark }) {
   return (
     <div style={{
       position: 'absolute',
-      top: '80px',
-      left: '10px',
+      top: '60px',
+      right: '10px',
       zIndex: 1000,
       width: '260px',
     }}>

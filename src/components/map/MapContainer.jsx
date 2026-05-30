@@ -66,11 +66,10 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 })
 
-export default function MapContainer({ session, isEditingPath, activePath, setActivePath }) {
+export default function MapContainer({ session, isEditingPath, activePath, setActivePath, isDark }) {
   const [activeCategories, setActiveCategories] = useState([])
   const [previewPath, setPreviewPath] = useState(null)
   const [bounds, setBounds] = useState(null)
-  const [isDark, setIsDark] = useState(true)
   const userId = session?.user?.id
   const { pinStates, setPinState } = usePinState(userId)
   const { homeBase, loading, DEFAULT_HOME_BASE } = useHomeBase(userId)
@@ -172,37 +171,14 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
         isDark={isDark}
       />
 
-      {/* Dark / Light mode toggle */}
-      <div style={{
-        position: 'absolute',
-        top: '12px',
-        right: '60px',
-        zIndex: 1000,
-      }}>
-        <button
-          onClick={() => setIsDark(prev => !prev)}
-          style={{
-            padding: '6px 12px',
-            borderRadius: '8px',
-            border: 'none',
-            backgroundColor: isDark ? 'rgba(255,255,255,0.9)' : 'rgba(15,23,42,0.85)',
-            color: isDark ? '#0f172a' : '#f1f5f9',
-            fontSize: '13px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-            backdropFilter: 'blur(4px)',
-          }}
-        >
-          {isDark ? '☀️ Light' : '🌙 Dark'}
-        </button>
-      </div>
+      {/* Search bar — top right, below navbar */}
+      {/* Rendered outside LeafletMap intentionally — see SearchBar.jsx which uses useMap() inside */}
 
-      {/* Path preview dropdown */}
+      {/* Path preview dropdown — top right, below search bar */}
       {!isEditingPath && paths.length > 0 && (
         <div style={{
           position: 'absolute',
-          top: '60px',
+          top: '108px',
           right: '12px',
           zIndex: 1000,
         }}>

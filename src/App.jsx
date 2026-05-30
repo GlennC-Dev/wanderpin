@@ -12,6 +12,7 @@ function AppInner({ session }) {
   const [activeTab, setActiveTab] = useState('map')
   const [activePath, setActivePath] = useState(null)
   const [isEditingPath, setIsEditingPath] = useState(false)
+  const [isDark, setIsDark] = useState(true)
 
   function handleEditPath(path) {
     setActivePath(path)
@@ -47,6 +48,8 @@ function AppInner({ session }) {
         isEditingPath={isEditingPath}
         activePath={activePath}
         onDoneEditing={handleDoneEditing}
+        isDark={isDark}
+        setIsDark={setIsDark}
       />
       {activeTab === 'map' && (
         <MapContainer
@@ -54,6 +57,7 @@ function AppInner({ session }) {
           isEditingPath={isEditingPath}
           activePath={activePath}
           setActivePath={setActivePath}
+          isDark={isDark}
         />
       )}
       {activeTab === 'paths' && (
@@ -79,9 +83,7 @@ function App() {
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session)
-      }
+      (_event, session) => setSession(session)
     )
 
     return () => subscription.unsubscribe()

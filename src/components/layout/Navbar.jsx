@@ -1,6 +1,6 @@
 import { supabase } from '../../lib/supabase'
 
-export default function Navbar({ session, onResetHomeBase, activeTab, setActiveTab, isEditingPath, activePath, onDoneEditing }) {
+export default function Navbar({ session, onResetHomeBase, activeTab, setActiveTab, isEditingPath, activePath, onDoneEditing, isDark, setIsDark }) {
   async function handleSignOut() {
     await supabase.auth.signOut()
   }
@@ -26,7 +26,6 @@ export default function Navbar({ session, onResetHomeBase, activeTab, setActiveT
         🗺️ WanderPin
       </span>
 
-      {/* Editing indicator or tab switcher */}
       {isEditingPath ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>
@@ -105,6 +104,21 @@ export default function Navbar({ session, onResetHomeBase, activeTab, setActiveT
           }}
         >
           Sign Out
+        </button>
+        <button
+          onClick={() => setIsDark(prev => !prev)}
+          style={{
+            background: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(15,23,42,0.1)',
+            color: isEditingPath ? '#fff' : isDark ? '#1e293b' : '#0f172a',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.3)' : 'rgba(15,23,42,0.2)'}`,
+            borderRadius: '6px',
+            padding: '6px 12px',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            fontSize: '13px',
+          }}
+        >
+          {isDark ? '☀️ Light' : '🌙 Dark'}
         </button>
       </div>
     </div>
