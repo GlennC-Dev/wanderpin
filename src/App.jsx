@@ -13,6 +13,8 @@ function AppInner({ session }) {
   const [activePath, setActivePath] = useState(null)
   const [isEditingPath, setIsEditingPath] = useState(false)
   const [isDark, setIsDark] = useState(true)
+  const [hideVisited, setHideVisited] = useState(false)
+  const [pathColor, setPathColor] = useState('#ef4444')
 
   function handleEditPath(path) {
     setActivePath(path)
@@ -50,6 +52,10 @@ function AppInner({ session }) {
         onDoneEditing={handleDoneEditing}
         isDark={isDark}
         setIsDark={setIsDark}
+        hideVisited={hideVisited}
+        setHideVisited={setHideVisited}
+        pathColor={pathColor}
+        setPathColor={setPathColor}
       />
       {activeTab === 'map' && (
         <MapContainer
@@ -58,6 +64,8 @@ function AppInner({ session }) {
           activePath={activePath}
           setActivePath={setActivePath}
           isDark={isDark}
+          hideVisited={hideVisited}
+          pathColor={pathColor}
         />
       )}
       {activeTab === 'paths' && (

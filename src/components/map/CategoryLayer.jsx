@@ -40,7 +40,7 @@ function boundsToKey(bounds) {
   return `${bounds.north.toFixed(3)},${bounds.south.toFixed(3)},${bounds.east.toFixed(3)},${bounds.west.toFixed(3)}`
 }
 
-export default function CategoryLayer({ category, lat, lng, bounds, pinStates, onSetPinState, isEditingPath, activePath, paths, onAddToPath, onCreateAndAddToPath, onRemoveFromPath }) {
+export default function CategoryLayer({ category, lat, lng, bounds, pinStates, onSetPinState, isEditingPath, activePath, paths, onAddToPath, onCreateAndAddToPath, onRemoveFromPath, hideVisited }) {
   const [pins, setPins] = useState([])
   const [loading, setLoading] = useState(true)
   const [addingPin, setAddingPin] = useState(null)
@@ -104,9 +104,13 @@ export default function CategoryLayer({ category, lat, lng, bounds, pinStates, o
     </div>
   )
 
+    const visiblePins = hideVisited
+    ? pins.filter(pin => (pinStates[pin.id] || null) !== 'visited')
+    : pins
+
   return (
     <>
-      {pins.map((pin) => {
+      {visiblePins.map((pin) => {
         const state = pinStates[pin.id] || null
         const isOnActivePath = activePath?.path_stops?.some(s => s.osm_id === String(pin.id))
 

@@ -66,7 +66,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 })
 
-export default function MapContainer({ session, isEditingPath, activePath, setActivePath, isDark }) {
+export default function MapContainer({ session, isEditingPath, activePath, setActivePath, isDark, hideVisited, pathColor }) {
   const [activeCategories, setActiveCategories] = useState([])
   const [previewPath, setPreviewPath] = useState(null)
   const [bounds, setBounds] = useState(null)
@@ -171,10 +171,6 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
         isDark={isDark}
       />
 
-      {/* Search bar — top right, below navbar */}
-      {/* Rendered outside LeafletMap intentionally — see SearchBar.jsx which uses useMap() inside */}
-
-      {/* Path preview dropdown — top right, below search bar */}
       {!isEditingPath && paths.length > 0 && (
         <div style={{
           position: 'absolute',
@@ -205,7 +201,6 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
         </div>
       )}
 
-      {/* New path modal */}
       {showNewPathModal && (
         <div style={{
           position: 'absolute',
@@ -314,6 +309,7 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
             onAddToPath={handleAddToPath}
             onCreateAndAddToPath={handleCreateAndAddToPath}
             onRemoveFromPath={handleRemoveFromPath}
+            hideVisited={hideVisited}
           />
         ))}
 
@@ -321,6 +317,7 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
           <PathLayer
             path={displayedPath}
             onRemoveStop={isEditingPath ? (stop) => handleRemoveFromPath(activePath, { id: stop.osm_id }) : null}
+            pathColor={pathColor}
           />
         )}
       </LeafletMap>
