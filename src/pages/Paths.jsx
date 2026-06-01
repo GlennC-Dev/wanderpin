@@ -14,17 +14,20 @@ function FlyToStop({ stop }) {
 }
 
 export function Paths({ user, activePath, setActivePath, onEditPath }) {
-  const { paths, loading, createPath, deletePath, deleteStop, renamePath } = usePaths(user)
+  const { paths, loading, createPath, deletePath, deleteStop, renamePath, updateStopLabel } = usePaths(user)
   const [building, setBuilding] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newDescription, setNewDescription] = useState('')
   const [renamingId, setRenamingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
   const [selectedStop, setSelectedStop] = useState(null)
+  const [editingNoteId, setEditingNoteId] = useState(null)
+  const [noteValue, setNoteValue] = useState('')
 
   function handleSelect(path) {
     setActivePath(prev => prev?.id === path.id ? null : path)
     setSelectedStop(null)
+    setEditingNoteId(null)
   }
 
   async function handleCreate() {
@@ -54,6 +57,7 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
       path_stops: prev.path_stops.filter(s => s.id !== stopId)
     } : prev)
     if (selectedStop?.id === stopId) setSelectedStop(null)
+    if (editingNoteId === stopId) setEditingNoteId(null)
   }
 
   async function handleRename(pathId) {
@@ -62,6 +66,18 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
     setActivePath(prev => prev?.id === pathId ? { ...prev, title: renameValue.trim() } : prev)
     setRenamingId(null)
     setRenameValue('')
+  }
+
+  async function handleSaveNote(stopId) {
+    await updateStopLabel(stopId, noteValue.trim() || null)
+    setActivePath(prev => prev ? {
+      ...prev,
+      path_stops: prev.path_stops.map(s =>
+        s.id === stopId ? { ...s, label: noteValue.trim() || null } : s
+      )
+    } : prev)
+    setEditingNoteId(null)
+    setNoteValue('')
   }
 
   const selectedPath = paths.find(p => p.id === activePath?.id) || null
@@ -206,15 +222,9 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
                 <button
                   onClick={() => handleRename(selectedPath.id)}
                   style={{
-                    flex: 1,
-                    padding: '6px',
-                    backgroundColor: '#22c55e',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    fontWeight: 'bold'
+                    flex: 1, padding: '6px', backgroundColor: '#22c55e',
+                    color: '#fff', border: 'none', borderRadius: '6px',
+                    cursor: 'pointer', fontSize: '12px', fontWeight: 'bold'
                   }}
                 >
                   Save
@@ -222,14 +232,9 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
                 <button
                   onClick={() => { setRenamingId(null); setRenameValue('') }}
                   style={{
-                    flex: 1,
-                    padding: '6px',
-                    backgroundColor: '#334155',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '12px'
+                    flex: 1, padding: '6px', backgroundColor: '#334155',
+                    color: '#fff', border: 'none', borderRadius: '6px',
+                    cursor: 'pointer', fontSize: '12px'
                   }}
                 >
                   Cancel
@@ -242,13 +247,8 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
               <button
                 onClick={() => { setRenamingId(selectedPath.id); setRenameValue(selectedPath.title) }}
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#94a3b8',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  padding: '2px 6px',
-                  borderRadius: '4px'
+                  background: 'none', border: 'none', color: '#94a3b8',
+                  cursor: 'pointer', fontSize: '13px', padding: '2px 6px', borderRadius: '4px'
                 }}
               >
                 ✏️
@@ -267,14 +267,9 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
             <button
               disabled
               style={{
-                padding: '8px',
-                backgroundColor: '#334155',
-                color: '#64748b',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'not-allowed',
-                fontSize: '13px',
-                fontWeight: 'bold'
+                padding: '8px', backgroundColor: '#334155', color: '#64748b',
+                border: 'none', borderRadius: '6px', cursor: 'not-allowed',
+                fontSize: '13px', fontWeight: 'bold'
               }}
             >
               🚶 Start Path — Coming Soon
@@ -282,14 +277,9 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
             <button
               onClick={() => onEditPath(selectedPath)}
               style={{
-                padding: '8px',
-                backgroundColor: '#3b82f6',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 'bold'
+                padding: '8px', backgroundColor: '#3b82f6', color: '#fff',
+                border: 'none', borderRadius: '6px', cursor: 'pointer',
+                fontSize: '13px', fontWeight: 'bold'
               }}
             >
               ✏️ Edit Path
@@ -297,14 +287,9 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
             <button
               onClick={() => handleDelete(selectedPath.id)}
               style={{
-                padding: '8px',
-                backgroundColor: '#ef4444',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 'bold'
+                padding: '8px', backgroundColor: '#ef4444', color: '#fff',
+                border: 'none', borderRadius: '6px', cursor: 'pointer',
+                fontSize: '13px', fontWeight: 'bold'
               }}
             >
               🗑️ Delete Path
@@ -324,53 +309,130 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
             {sortedStops.map((stop, index) => (
               <div
                 key={stop.id}
-                onClick={() => setSelectedStop(stop)}
                 style={{
-                  padding: '8px',
                   marginBottom: '6px',
                   backgroundColor: selectedStop?.id === stop.id ? '#1e3a5f' : '#0f172a',
                   borderRadius: '6px',
-                  fontSize: '13px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  cursor: 'pointer',
-                  border: selectedStop?.id === stop.id ? '1px solid #3b82f6' : '1px solid transparent'
+                  border: selectedStop?.id === stop.id ? '1px solid #3b82f6' : '1px solid transparent',
+                  overflow: 'hidden',
                 }}
               >
-                <span>
-                  <span style={{ color: '#3b82f6', fontWeight: 'bold', marginRight: '8px' }}>
-                    {index + 1}
-                  </span>
-                  {stop.name || stop.label || 'Unnamed stop'}
-                </span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleDeleteStop(stop.id) }}
+                {/* Stop row */}
+                <div
+                  onClick={() => {
+                    setSelectedStop(stop)
+                    setEditingNoteId(null)
+                  }}
                   style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#ef4444',
+                    padding: '8px',
+                    fontSize: '13px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                     cursor: 'pointer',
-                    fontSize: '14px',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    flexShrink: 0
                   }}
                 >
-                  ✕
-                </button>
+                  <span>
+                    <span style={{ color: '#3b82f6', fontWeight: 'bold', marginRight: '8px' }}>
+                      {index + 1}
+                    </span>
+                    {stop.name || 'Unnamed stop'}
+                  </span>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDeleteStop(stop.id) }}
+                    style={{
+                      background: 'none', border: 'none', color: '#ef4444',
+                      cursor: 'pointer', fontSize: '14px', padding: '2px 6px',
+                      borderRadius: '4px', flexShrink: 0
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Note section — shows when stop is selected */}
+                {selectedStop?.id === stop.id && (
+                  <div style={{ padding: '0 8px 8px 8px' }}>
+                    {editingNoteId === stop.id ? (
+                      <div>
+                        <input
+                          autoFocus
+                          value={noteValue}
+                          onChange={e => setNoteValue(e.target.value)}
+                          placeholder="Add a note..."
+                          style={{
+                            width: '100%',
+                            padding: '6px 8px',
+                            borderRadius: '6px',
+                            border: 'none',
+                            backgroundColor: '#0f172a',
+                            color: '#fff',
+                            fontSize: '12px',
+                            boxSizing: 'border-box',
+                            marginBottom: '6px',
+                          }}
+                        />
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button
+                            onClick={() => handleSaveNote(stop.id)}
+                            style={{
+                              flex: 1, padding: '5px', backgroundColor: '#22c55e',
+                              color: '#fff', border: 'none', borderRadius: '6px',
+                              cursor: 'pointer', fontSize: '11px', fontWeight: 'bold'
+                            }}
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => { setEditingNoteId(null); setNoteValue('') }}
+                            style={{
+                              flex: 1, padding: '5px', backgroundColor: '#334155',
+                              color: '#fff', border: 'none', borderRadius: '6px',
+                              cursor: 'pointer', fontSize: '11px'
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        onClick={() => { setEditingNoteId(stop.id); setNoteValue(stop.label || '') }}
+                        style={{
+                          fontSize: '12px',
+                          color: stop.label ? '#94a3b8' : '#475569',
+                          cursor: 'pointer',
+                          padding: '4px 6px',
+                          borderRadius: '4px',
+                          border: '1px dashed #334155',
+                          fontStyle: stop.label ? 'normal' : 'italic',
+                        }}
+                      >
+                        {stop.label || 'Add a note...'}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Show note preview when stop is not selected but has a note */}
+                {selectedStop?.id !== stop.id && stop.label && (
+                  <div style={{
+                    padding: '0 8px 6px 28px',
+                    fontSize: '11px',
+                    color: '#475569',
+                    fontStyle: 'italic',
+                  }}>
+                    {stop.label}
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </div>
       ) : (
         <div style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#475569',
-          fontSize: '14px'
+          flex: 1, display: 'flex', alignItems: 'center',
+          justifyContent: 'center', color: '#475569', fontSize: '14px'
         }}>
           Select a path to see details
         </div>
@@ -431,14 +493,9 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
             </LeafletMap>
           ) : (
             <div style={{
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#475569',
-              fontSize: '14px',
-              flexDirection: 'column',
-              gap: '8px'
+              height: '100%', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', color: '#475569', fontSize: '14px',
+              flexDirection: 'column', gap: '8px'
             }}>
               <div style={{ fontSize: '32px' }}>📍</div>
               <div>No stops yet — hit Edit Path to start building!</div>
@@ -446,14 +503,9 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
           )
         ) : (
           <div style={{
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#475569',
-            fontSize: '14px',
-            flexDirection: 'column',
-            gap: '8px'
+            height: '100%', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', color: '#475569', fontSize: '14px',
+            flexDirection: 'column', gap: '8px'
           }}>
             <div style={{ fontSize: '32px' }}>🗺️</div>
             <div>Select a path to preview it here</div>

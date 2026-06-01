@@ -43,9 +43,14 @@ export default function PathLayer({ path, onRemoveStop, pathColor }) {
               <div style={{ fontWeight: 'bold', marginBottom: '6px' }}>
                 Stop {index + 1}
               </div>
-              <div style={{ marginBottom: '10px', fontSize: '13px' }}>
-                {stop.name || stop.label || 'Unnamed stop'}
+              <div style={{ marginBottom: '4px', fontSize: '13px' }}>
+                {stop.name || 'Unnamed stop'}
               </div>
+              {stop.label && (
+                <div style={{ marginBottom: '10px', fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>
+                  {stop.label}
+                </div>
+              )}
               {onRemoveStop && (
                 <button
                   onClick={() => onRemoveStop(stop)}

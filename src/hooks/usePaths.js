@@ -91,5 +91,16 @@ export function usePaths(user) {
     return { error }
   }
 
-  return { paths, loading, createPath, deletePath, fetchPaths, deleteStop, renamePath }
+  async function updateStopLabel(stopId, label) {
+  const { error } = await supabase
+    .from('path_stops')
+    .update({ label })
+    .eq('id', stopId)
+
+  if (!error) await fetchPaths()
+  return { error }
+}
+
+
+  return { paths, loading, createPath, deletePath, fetchPaths, deleteStop, renamePath, updateStopLabel }
 }
