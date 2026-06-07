@@ -1,4 +1,4 @@
-export function PathCard({ path, onSelect, isActive }) {
+export function PathCard({ path, onSelect, isActive, isDark }) {
   const stopCount = path.path_stops?.length || 0
 
   return (
@@ -9,8 +9,8 @@ export function PathCard({ path, onSelect, isActive }) {
         marginBottom: '8px',
         borderRadius: '8px',
         cursor: 'pointer',
-        backgroundColor: isActive ? '#3b82f6' : '#1e293b',
-        color: isActive ? '#fff' : '#cbd5e1',
+        backgroundColor: isActive ? '#3b82f6' : isDark ? '#1e293b' : '#e2e8f0',
+        color: isActive ? '#fff' : isDark ? '#cbd5e1' : '#0f172a',
         border: isActive ? '2px solid #60a5fa' : '2px solid transparent',
         transition: 'all 0.2s'
       }}

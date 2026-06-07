@@ -6,7 +6,6 @@ const PATH_COLORS = [
   { label: 'Orange', value: '#f97316' },
   { label: 'Purple', value: '#a855f7' },
   { label: 'Pink', value: '#ec4899' },
-  { label: 'White', value: '#f1f5f9' },
   { label: 'Blue', value: '#3b82f6' },
 ]
 
@@ -29,7 +28,9 @@ export default function Navbar({ session, onResetHomeBase, activeTab, setActiveT
           ? 'rgba(249,115,22,0.97)'
           : isEditingPath
             ? 'rgba(59,130,246,0.97)'
-            : 'rgba(255,255,255,0.95)',
+            : isDark
+              ? 'rgba(15,23,42,0.97)'
+              : 'rgba(255,255,255,0.95)',
         backdropFilter: 'blur(8px)',
         padding: '8px 16px',
         display: 'flex',
@@ -41,7 +42,7 @@ export default function Navbar({ session, onResetHomeBase, activeTab, setActiveT
         <span style={{
           fontWeight: 'bold',
           fontSize: '18px',
-          color: isDropMode || isEditingPath ? '#fff' : 'inherit'
+          color: isDropMode || isEditingPath || isDark ? '#fff' : 'inherit'
         }}>
           🗺️ WanderPin
         </span>
@@ -95,8 +96,8 @@ export default function Navbar({ session, onResetHomeBase, activeTab, setActiveT
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 style={{
-                  background: activeTab === tab ? '#3b82f6' : '#e2e8f0',
-                  color: activeTab === tab ? '#fff' : '#475569',
+                  background: activeTab === tab ? '#3b82f6' : isDark ? '#1e293b' : '#e2e8f0',
+                  color: activeTab === tab ? '#fff' : isDark ? '#94a3b8' : '#475569',
                   border: 'none',
                   borderRadius: '6px',
                   padding: '6px 14px',
@@ -130,7 +131,7 @@ export default function Navbar({ session, onResetHomeBase, activeTab, setActiveT
         )}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontSize: '14px', color: isDropMode || isEditingPath ? '#fff' : '#666' }}>
+          <span style={{ fontSize: '14px', color: isDropMode || isEditingPath || isDark ? '#fff' : '#666' }}>
             {session?.user?.email}
           </span>
           <button
@@ -183,11 +184,20 @@ export default function Navbar({ session, onResetHomeBase, activeTab, setActiveT
 
       {/* Settings dialog */}
       {showSettings && (
-        <div style={{
-          position: 'absolute',
-          top: '52px',
-          right: '12px',
-          zIndex: 1002,
+        <>
+          <div
+            onClick={() => setShowSettings(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 1001,
+            }}
+          />
+          <div style={{
+            position: 'absolute',
+            top: '52px',
+            right: '12px',
+            zIndex: 1002,
           backgroundColor: isDark ? '#0f172a' : '#ffffff',
           border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
           borderRadius: '12px',
@@ -269,6 +279,7 @@ export default function Navbar({ session, onResetHomeBase, activeTab, setActiveT
             </div>
           </div>
         </div>
+        </>
       )}
     </>
   )

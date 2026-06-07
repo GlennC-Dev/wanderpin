@@ -12,9 +12,23 @@ function AppInner({ session }) {
   const [activeTab, setActiveTab] = useState('map')
   const [activePath, setActivePath] = useState(null)
   const [isEditingPath, setIsEditingPath] = useState(false)
-  const [isDark, setIsDark] = useState(true)
-  const [hideVisited, setHideVisited] = useState(false)
-  const [pathColor, setPathColor] = useState('#ef4444')
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('wp_isDark')
+    return saved !== null ? saved === 'true' : true
+  })
+  const [hideVisited, setHideVisited] = useState(() => {
+    const saved = localStorage.getItem('wp_hideVisited')
+    return saved === 'true'
+  })
+  const [pathColor, setPathColor] = useState(() => {
+    const saved = localStorage.getItem('wp_pathColor')
+    if (saved === '#f1f5f9') return '#ef4444'
+    return saved || '#ef4444'
+  })
+
+  useEffect(() => { localStorage.setItem('wp_isDark', isDark) }, [isDark])
+  useEffect(() => { localStorage.setItem('wp_hideVisited', hideVisited) }, [hideVisited])
+  useEffect(() => { localStorage.setItem('wp_pathColor', pathColor) }, [pathColor])
   const [isDropMode, setIsDropMode] = useState(false)
 
   function handleEditPath(path) {
@@ -79,6 +93,8 @@ function AppInner({ session }) {
           activePath={activePath}
           setActivePath={setActivePath}
           onEditPath={handleEditPath}
+          isDark={isDark}
+
         />
       )}
     </div>

@@ -13,7 +13,7 @@ function FlyToStop({ stop }) {
   return null
 }
 
-export function Paths({ user, activePath, setActivePath, onEditPath }) {
+export function Paths({ user, activePath, setActivePath, onEditPath, isDark }) {
   const { paths, loading, createPath, deletePath, deleteStop, renamePath, updateStopLabel } = usePaths(user)
   const [building, setBuilding] = useState(false)
   const [newTitle, setNewTitle] = useState('')
@@ -23,6 +23,15 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
   const [selectedStop, setSelectedStop] = useState(null)
   const [editingNoteId, setEditingNoteId] = useState(null)
   const [noteValue, setNoteValue] = useState('')
+
+  // theme shorthands
+  const bg1 = isDark ? '#0f172a' : '#f1f5f9'
+  const bg2 = isDark ? '#1e293b' : '#ffffff'
+  const bg3 = isDark ? '#334155' : '#e2e8f0'
+  const text1 = isDark ? '#f1f5f9' : '#0f172a'
+  const text2 = isDark ? '#94a3b8' : '#64748b'
+  const text3 = isDark ? '#475569' : '#94a3b8'
+  const border = isDark ? '#334155' : '#e2e8f0'
 
   function handleSelect(path) {
     setActivePath(prev => prev?.id === path.id ? null : path)
@@ -96,14 +105,15 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
       {/* Sidebar — path list */}
       <div style={{
         width: '300px',
-        backgroundColor: '#0f172a',
-        color: '#fff',
+        backgroundColor: bg1,
+        color: text1,
         padding: '60px 16px 16px 16px',
         overflowY: 'scroll',
-        flexShrink: 0
+        flexShrink: 0,
+        borderRight: `1px solid ${border}`
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h2 style={{ margin: 0, fontSize: '18px' }}>Paths</h2>
+          <h2 style={{ margin: 0, fontSize: '18px', color: text1 }}>Paths</h2>
           <button
             onClick={() => setBuilding(b => !b)}
             style={{
@@ -121,7 +131,7 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
         </div>
 
         {building && (
-          <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#1e293b', borderRadius: '8px' }}>
+          <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: bg2, borderRadius: '8px' }}>
             <input
               placeholder="Path title"
               value={newTitle}
@@ -131,9 +141,9 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
                 marginBottom: '8px',
                 padding: '8px',
                 borderRadius: '6px',
-                border: 'none',
-                backgroundColor: '#0f172a',
-                color: '#fff',
+                border: `1px solid ${border}`,
+                backgroundColor: bg1,
+                color: text1,
                 boxSizing: 'border-box'
               }}
             />
@@ -146,9 +156,9 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
                 marginBottom: '8px',
                 padding: '8px',
                 borderRadius: '6px',
-                border: 'none',
-                backgroundColor: '#0f172a',
-                color: '#fff',
+                border: `1px solid ${border}`,
+                backgroundColor: bg1,
+                color: text1,
                 boxSizing: 'border-box'
               }}
             />
@@ -170,10 +180,10 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
           </div>
         )}
 
-        {loading && <div style={{ opacity: 0.5, fontSize: '13px' }}>Loading paths...</div>}
+        {loading && <div style={{ opacity: 0.5, fontSize: '13px', color: text2 }}>Loading paths...</div>}
 
         {!loading && paths.length === 0 && (
-          <div style={{ opacity: 0.5, fontSize: '13px' }}>No paths yet. Create one!</div>
+          <div style={{ opacity: 0.5, fontSize: '13px', color: text2 }}>No paths yet. Create one!</div>
         )}
 
         {paths.map(path => (
@@ -182,6 +192,7 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
             path={path}
             onSelect={handleSelect}
             isActive={activePath?.id === path.id}
+            isDark={isDark}
           />
         ))}
       </div>
@@ -190,12 +201,13 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
       {selectedPath ? (
         <div style={{
           width: '300px',
-          backgroundColor: '#1e293b',
-          color: '#fff',
+          backgroundColor: bg2,
+          color: text1,
           padding: '60px 16px 16px 16px',
           overflowY: 'auto',
           flexShrink: 0,
-          borderLeft: '1px solid #334155'
+          borderLeft: `1px solid ${border}`,
+          borderRight: `1px solid ${border}`
         }}>
 
           {/* Title / rename */}
@@ -209,9 +221,9 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
                   width: '100%',
                   padding: '8px',
                   borderRadius: '6px',
-                  border: 'none',
-                  backgroundColor: '#0f172a',
-                  color: '#fff',
+                  border: `1px solid ${border}`,
+                  backgroundColor: bg1,
+                  color: text1,
                   marginBottom: '8px',
                   boxSizing: 'border-box',
                   fontSize: '15px',
@@ -232,8 +244,8 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
                 <button
                   onClick={() => { setRenamingId(null); setRenameValue('') }}
                   style={{
-                    flex: 1, padding: '6px', backgroundColor: '#334155',
-                    color: '#fff', border: 'none', borderRadius: '6px',
+                    flex: 1, padding: '6px', backgroundColor: bg3,
+                    color: text1, border: 'none', borderRadius: '6px',
                     cursor: 'pointer', fontSize: '12px'
                   }}
                 >
@@ -243,11 +255,11 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <h3 style={{ margin: 0, fontSize: '16px', flex: 1 }}>{selectedPath.title}</h3>
+              <h3 style={{ margin: 0, fontSize: '16px', flex: 1, color: text1 }}>{selectedPath.title}</h3>
               <button
                 onClick={() => { setRenamingId(selectedPath.id); setRenameValue(selectedPath.title) }}
                 style={{
-                  background: 'none', border: 'none', color: '#94a3b8',
+                  background: 'none', border: 'none', color: text2,
                   cursor: 'pointer', fontSize: '13px', padding: '2px 6px', borderRadius: '4px'
                 }}
               >
@@ -257,7 +269,7 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
           )}
 
           {selectedPath.description && (
-            <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: '#94a3b8' }}>
+            <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: text2 }}>
               {selectedPath.description}
             </p>
           )}
@@ -267,7 +279,7 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
             <button
               disabled
               style={{
-                padding: '8px', backgroundColor: '#334155', color: '#64748b',
+                padding: '8px', backgroundColor: bg3, color: text3,
                 border: 'none', borderRadius: '6px', cursor: 'not-allowed',
                 fontSize: '13px', fontWeight: 'bold'
               }}
@@ -298,11 +310,11 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
 
           {/* Stop list */}
           <div>
-            <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', color: text2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Stops ({sortedStops.length})
             </h4>
             {sortedStops.length === 0 && (
-              <div style={{ fontSize: '12px', color: '#475569' }}>
+              <div style={{ fontSize: '12px', color: text3 }}>
                 No stops yet. Hit Edit Path to start adding pins!
               </div>
             )}
@@ -311,13 +323,12 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
                 key={stop.id}
                 style={{
                   marginBottom: '6px',
-                  backgroundColor: selectedStop?.id === stop.id ? '#1e3a5f' : '#0f172a',
+                  backgroundColor: selectedStop?.id === stop.id ? (isDark ? '#1e3a5f' : '#dbeafe') : bg1,
                   borderRadius: '6px',
-                  border: selectedStop?.id === stop.id ? '1px solid #3b82f6' : '1px solid transparent',
+                  border: selectedStop?.id === stop.id ? '1px solid #3b82f6' : `1px solid transparent`,
                   overflow: 'hidden',
                 }}
               >
-                {/* Stop row */}
                 <div
                   onClick={() => {
                     setSelectedStop(stop)
@@ -330,6 +341,7 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     cursor: 'pointer',
+                    color: text1,
                   }}
                 >
                   <span>
@@ -350,7 +362,6 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
                   </button>
                 </div>
 
-                {/* Note section — shows when stop is selected */}
                 {selectedStop?.id === stop.id && (
                   <div style={{ padding: '0 8px 8px 8px' }}>
                     {editingNoteId === stop.id ? (
@@ -364,9 +375,9 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
                             width: '100%',
                             padding: '6px 8px',
                             borderRadius: '6px',
-                            border: 'none',
-                            backgroundColor: '#0f172a',
-                            color: '#fff',
+                            border: `1px solid ${border}`,
+                            backgroundColor: bg1,
+                            color: text1,
                             fontSize: '12px',
                             boxSizing: 'border-box',
                             marginBottom: '6px',
@@ -386,8 +397,8 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
                           <button
                             onClick={() => { setEditingNoteId(null); setNoteValue('') }}
                             style={{
-                              flex: 1, padding: '5px', backgroundColor: '#334155',
-                              color: '#fff', border: 'none', borderRadius: '6px',
+                              flex: 1, padding: '5px', backgroundColor: bg3,
+                              color: text1, border: 'none', borderRadius: '6px',
                               cursor: 'pointer', fontSize: '11px'
                             }}
                           >
@@ -400,11 +411,11 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
                         onClick={() => { setEditingNoteId(stop.id); setNoteValue(stop.label || '') }}
                         style={{
                           fontSize: '12px',
-                          color: stop.label ? '#94a3b8' : '#475569',
+                          color: stop.label ? text2 : text3,
                           cursor: 'pointer',
                           padding: '4px 6px',
                           borderRadius: '4px',
-                          border: '1px dashed #334155',
+                          border: `1px dashed ${border}`,
                           fontStyle: stop.label ? 'normal' : 'italic',
                         }}
                       >
@@ -414,12 +425,11 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
                   </div>
                 )}
 
-                {/* Show note preview when stop is not selected but has a note */}
                 {selectedStop?.id !== stop.id && stop.label && (
                   <div style={{
                     padding: '0 8px 6px 28px',
                     fontSize: '11px',
-                    color: '#475569',
+                    color: text3,
                     fontStyle: 'italic',
                   }}>
                     {stop.label}
@@ -431,8 +441,14 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
         </div>
       ) : (
         <div style={{
-          flex: 1, display: 'flex', alignItems: 'center',
-          justifyContent: 'center', color: '#475569', fontSize: '14px'
+          width: '300px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: text3,
+          fontSize: '14px',
+          backgroundColor: bg2,
+          borderLeft: `1px solid ${border}`
         }}>
           Select a path to see details
         </div>
@@ -450,8 +466,15 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
               zoomControl={false}
             >
               <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                key={isDark ? 'dark' : 'light'}
+                attribution={isDark
+                  ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
+                  : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                }
+                url={isDark
+                  ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                  : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                }
               />
               <FlyToStop stop={selectedStop} />
               {positions.length > 1 && (
@@ -494,8 +517,9 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
           ) : (
             <div style={{
               height: '100%', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', color: '#475569', fontSize: '14px',
-              flexDirection: 'column', gap: '8px'
+              justifyContent: 'center', color: text3, fontSize: '14px',
+              flexDirection: 'column', gap: '8px',
+              backgroundColor: bg2
             }}>
               <div style={{ fontSize: '32px' }}>📍</div>
               <div>No stops yet — hit Edit Path to start building!</div>
@@ -504,8 +528,9 @@ export function Paths({ user, activePath, setActivePath, onEditPath }) {
         ) : (
           <div style={{
             height: '100%', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', color: '#475569', fontSize: '14px',
-            flexDirection: 'column', gap: '8px'
+            justifyContent: 'center', color: text3, fontSize: '14px',
+            flexDirection: 'column', gap: '8px',
+            backgroundColor: bg2
           }}>
             <div style={{ fontSize: '32px' }}>🗺️</div>
             <div>Select a path to preview it here</div>
