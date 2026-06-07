@@ -15,6 +15,7 @@ function AppInner({ session }) {
   const [isDark, setIsDark] = useState(true)
   const [hideVisited, setHideVisited] = useState(false)
   const [pathColor, setPathColor] = useState('#ef4444')
+  const [isDropMode, setIsDropMode] = useState(false)
 
   function handleEditPath(path) {
     setActivePath(path)
@@ -56,6 +57,8 @@ function AppInner({ session }) {
         setHideVisited={setHideVisited}
         pathColor={pathColor}
         setPathColor={setPathColor}
+        isDropMode={isDropMode}
+        setIsDropMode={setIsDropMode}
       />
       {activeTab === 'map' && (
         <MapContainer
@@ -66,6 +69,8 @@ function AppInner({ session }) {
           isDark={isDark}
           hideVisited={hideVisited}
           pathColor={pathColor}
+          isDropMode={isDropMode}
+          setIsDropMode={setIsDropMode}
         />
       )}
       {activeTab === 'paths' && (

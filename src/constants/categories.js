@@ -35,10 +35,17 @@ export const CATEGORIES = [
     overpassQuery: 'shop=gift',
   },
   {
-  id: 'hotels',
-  label: 'Hotels',
-  icon: '🏨',
-  color: '#B39DDB',
-  overpassQuery: 'tourism=hotel',
+    id: 'hotels',
+    label: 'Hotels',
+    icon: '🏨',
+    color: '#B39DDB',
+    overpassQuery: 'tourism=hotel',
+  },
+  {
+    id: 'mypins',
+    label: 'My Pins',
+    icon: '📌',
+    color: '#F97316',
+    overpassQuery: null,
   },
 ]

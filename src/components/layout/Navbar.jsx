@@ -10,7 +10,7 @@ const PATH_COLORS = [
   { label: 'Blue', value: '#3b82f6' },
 ]
 
-export default function Navbar({ session, onResetHomeBase, activeTab, setActiveTab, isEditingPath, activePath, onDoneEditing, isDark, setIsDark, hideVisited, setHideVisited, pathColor, setPathColor }) {
+export default function Navbar({ session, onResetHomeBase, activeTab, setActiveTab, isEditingPath, activePath, onDoneEditing, isDark, setIsDark, hideVisited, setHideVisited, pathColor, setPathColor, isDropMode, setIsDropMode }) {
   const [showSettings, setShowSettings] = useState(false)
 
   async function handleSignOut() {
@@ -25,7 +25,11 @@ export default function Navbar({ session, onResetHomeBase, activeTab, setActiveT
         left: 0,
         right: 0,
         zIndex: 1001,
-        background: isEditingPath ? 'rgba(59,130,246,0.97)' : 'rgba(255,255,255,0.95)',
+        background: isDropMode
+          ? 'rgba(249,115,22,0.97)'
+          : isEditingPath
+            ? 'rgba(59,130,246,0.97)'
+            : 'rgba(255,255,255,0.95)',
         backdropFilter: 'blur(8px)',
         padding: '8px 16px',
         display: 'flex',
@@ -34,11 +38,36 @@ export default function Navbar({ session, onResetHomeBase, activeTab, setActiveT
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         transition: 'background 0.3s'
       }}>
-        <span style={{ fontWeight: 'bold', fontSize: '18px', color: isEditingPath ? '#fff' : 'inherit' }}>
+        <span style={{
+          fontWeight: 'bold',
+          fontSize: '18px',
+          color: isDropMode || isEditingPath ? '#fff' : 'inherit'
+        }}>
           🗺️ WanderPin
         </span>
 
-        {isEditingPath ? (
+        {isDropMode ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>
+              📌 Tap anywhere on the map to drop a pin
+            </span>
+            <button
+              onClick={() => setIsDropMode(false)}
+              style={{
+                background: '#fff',
+                color: '#f97316',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 14px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                fontSize: '13px'
+              }}
+            >
+              ✕ Cancel
+            </button>
+          </div>
+        ) : isEditingPath ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>
               ✏️ Editing: {activePath?.title}
@@ -78,13 +107,30 @@ export default function Navbar({ session, onResetHomeBase, activeTab, setActiveT
                 }}
               >
                 {tab === 'map' ? '🗺️ Map' : '📍 Paths'}
-              </button>
+            </button>
             ))}
+            {activeTab === 'map' && (
+              <button
+                onClick={() => setIsDropMode(true)}
+                style={{
+                  background: '#f97316',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '6px 14px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  fontSize: '13px',
+                }}
+              >
+                📌 Drop Pin
+              </button>
+            )}
           </div>
         )}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontSize: '14px', color: isEditingPath ? '#dbeafe' : '#666' }}>
+          <span style={{ fontSize: '14px', color: isDropMode || isEditingPath ? '#fff' : '#666' }}>
             {session?.user?.email}
           </span>
           <button
@@ -121,7 +167,7 @@ export default function Navbar({ session, onResetHomeBase, activeTab, setActiveT
             onClick={() => setShowSettings(prev => !prev)}
             style={{
               background: showSettings ? '#1e293b' : 'transparent',
-              color: isEditingPath ? '#fff' : '#0f172a',
+              color: isDropMode || isEditingPath ? '#fff' : '#0f172a',
               border: '1px solid rgba(0,0,0,0.15)',
               borderRadius: '6px',
               padding: '6px 10px',
@@ -153,7 +199,6 @@ export default function Navbar({ session, onResetHomeBase, activeTab, setActiveT
             ⚙️ Settings
           </div>
 
-          {/* Dark / Light mode */}
           <div style={{ marginBottom: '16px' }}>
             <div style={{ fontSize: '12px', color: isDark ? '#94a3b8' : '#64748b', marginBottom: '8px' }}>
               MAP THEME
@@ -177,7 +222,6 @@ export default function Navbar({ session, onResetHomeBase, activeTab, setActiveT
             </button>
           </div>
 
-          {/* Hide visited pins */}
           <div style={{ marginBottom: '16px' }}>
             <div style={{ fontSize: '12px', color: isDark ? '#94a3b8' : '#64748b', marginBottom: '8px' }}>
               VISITED PINS
@@ -201,7 +245,6 @@ export default function Navbar({ session, onResetHomeBase, activeTab, setActiveT
             </button>
           </div>
 
-          {/* Path color */}
           <div>
             <div style={{ fontSize: '12px', color: isDark ? '#94a3b8' : '#64748b', marginBottom: '8px' }}>
               PATH COLOR
