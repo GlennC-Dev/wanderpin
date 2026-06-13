@@ -7,7 +7,8 @@ import CategoryLayer from './CategoryLayer'
 import CategoryToggle from '../ui/CategoryToggle'
 import PathLayer from './PathLayer'
 import SearchBar from '../ui/SearchBar'
-import { usePinState } from '../../hooks/usePinState'
+import SerendipityPin from './SerendipityPin'
+import SerendipityCard from '../ui/SerendipityCard'
 import { useHomeBase } from '../../hooks/useHomeBase'
 import { usePaths } from '../../hooks/usePaths'
 import { useCustomPins } from '../../hooks/useCustomPins'
@@ -96,12 +97,18 @@ function createCustomPinIcon(color) {
   })
 }
 
-export default function MapContainer({ session, isEditingPath, activePath, setActivePath, isDark, hideVisited, pathColor, isDropMode, setIsDropMode }) {
+export default function MapContainer({
+  session, isEditingPath, activePath, setActivePath,
+  isDark, hideVisited, pathColor, isDropMode, setIsDropMode,
+  pinStates, setPinState,
+  serendipityPins, skipsRemaining, onSkipSerendipity,
+}) {
   const [activeCategories, setActiveCategories] = useState([])
   const [previewPath, setPreviewPath] = useState(null)
   const [bounds, setBounds] = useState(null)
+  const [selectedSerendipityPin, setSelectedSerendipityPin] = useState(null)
+
   const userId = session?.user?.id
-  const { pinStates, setPinState } = usePinState(userId)
   const { homeBase, loading, DEFAULT_HOME_BASE } = useHomeBase(userId)
   const { paths, createPath, fetchPaths } = usePaths(session?.user)
   const { customPins, addCustomPin, updateCustomPin, deleteCustomPin } = useCustomPins(userId)
@@ -109,22 +116,18 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
   const [pendingPin, setPendingPin] = useState(null)
   const [newPathTitle, setNewPathTitle] = useState('')
 
-  // Drop pin modal state
   const [dropCoords, setDropCoords] = useState(null)
   const [dropName, setDropName] = useState('')
   const [dropNotes, setDropNotes] = useState('')
   const [showDropModal, setShowDropModal] = useState(false)
 
-  // editing notes on existing custom pins
   const [editingNotesPin, setEditingNotesPin] = useState(null)
   const [editNotesValue, setEditNotesValue] = useState('')
 
-  // Add to path prompt state
   const [pendingCustomPin, setPendingCustomPin] = useState(null)
   const [showAddToPathPrompt, setShowAddToPathPrompt] = useState(false)
   const [addingToPathPin, setAddingToPathPin] = useState(null)
 
-  // Edit custom pin state
   const [editingCustomPin, setEditingCustomPin] = useState(null)
   const [editName, setEditName] = useState('')
 
@@ -153,7 +156,7 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
 
   async function handleConfirmDrop() {
     if (!dropName.trim() || !dropCoords) return
-      const { pin } = await addCustomPin({
+    const { pin } = await addCustomPin({
       name: dropName.trim(),
       lat: dropCoords.lat,
       lng: dropCoords.lng,
@@ -164,7 +167,6 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
     setDropName('')
     setDropNotes('')
     setIsDropMode(false)
-
 
     if (pin) {
       setPendingCustomPin(pin)
@@ -296,7 +298,7 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
         </div>
       )}
 
-      {/* Drop pin name modal */}
+      {/* Drop pin modal */}
       {showDropModal && (
         <div style={{
           position: 'absolute',
@@ -311,22 +313,16 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
           boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
         }}>
           <h3 style={{ margin: '0 0 12px 0', fontSize: '16px' }}>📌 Name this Pin</h3>
-<input
+          <input
             placeholder="e.g. That amazing noodle place"
             value={dropName}
             onChange={e => setDropName(e.target.value)}
             autoFocus
             onKeyDown={e => e.key === 'Enter' && handleConfirmDrop()}
             style={{
-              width: '100%',
-              padding: '8px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: '#1e293b',
-              color: '#fff',
-              marginBottom: '8px',
-              boxSizing: 'border-box',
-              fontSize: '14px'
+              width: '100%', padding: '8px', borderRadius: '6px',
+              border: 'none', backgroundColor: '#1e293b', color: '#fff',
+              marginBottom: '8px', boxSizing: 'border-box', fontSize: '14px'
             }}
           />
           <textarea
@@ -335,16 +331,9 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
             onChange={e => setDropNotes(e.target.value)}
             rows={2}
             style={{
-              width: '100%',
-              padding: '8px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: '#1e293b',
-              color: '#fff',
-              marginBottom: '12px',
-              boxSizing: 'border-box',
-              fontSize: '13px',
-              resize: 'none',
+              width: '100%', padding: '8px', borderRadius: '6px',
+              border: 'none', backgroundColor: '#1e293b', color: '#fff',
+              marginBottom: '12px', boxSizing: 'border-box', fontSize: '13px', resize: 'none',
             }}
           />
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -391,9 +380,7 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
           </p>
           {addingToPathPin ? (
             <div>
-              <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>
-                Pick a path:
-              </div>
+              <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Pick a path:</div>
               {paths.map(p => (
                 <button
                   key={p.id}
@@ -630,7 +617,6 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
                   <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>
                     📌 {pin.name}
                   </div>
-
                   <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                     <button
                       onClick={() => setPinState(pinKey, 'visited')}
@@ -693,7 +679,6 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
                     </button>
                   )}
 
-{/* Notes section */}
                   {editingNotesPin?.id === pin.id ? (
                     <div style={{ marginBottom: '6px' }}>
                       <textarea
@@ -703,16 +688,9 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
                         rows={2}
                         placeholder="Add a note..."
                         style={{
-                          width: '100%',
-                          padding: '6px',
-                          borderRadius: '6px',
-                          border: 'none',
-                          backgroundColor: '#f1f5f9',
-                          color: '#0f172a',
-                          fontSize: '12px',
-                          boxSizing: 'border-box',
-                          resize: 'none',
-                          marginBottom: '4px',
+                          width: '100%', padding: '6px', borderRadius: '6px',
+                          border: 'none', backgroundColor: '#f1f5f9', color: '#0f172a',
+                          fontSize: '12px', boxSizing: 'border-box', resize: 'none', marginBottom: '4px',
                         }}
                       />
                       <div style={{ display: 'flex', gap: '4px' }}>
@@ -748,12 +726,9 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
                       style={{
                         fontSize: '12px',
                         color: pin.notes ? '#475569' : '#94a3b8',
-                        cursor: 'pointer',
-                        padding: '4px 6px',
-                        borderRadius: '4px',
+                        cursor: 'pointer', padding: '4px 6px', borderRadius: '4px',
                         border: '1px dashed #cbd5e1',
-                        fontStyle: pin.notes ? 'normal' : 'italic',
-                        marginBottom: '6px',
+                        fontStyle: pin.notes ? 'normal' : 'italic', marginBottom: '6px',
                       }}
                     >
                       {pin.notes || 'Add a note...'}
@@ -797,7 +772,25 @@ export default function MapContainer({ session, isEditingPath, activePath, setAc
             pathColor={pathColor}
           />
         )}
+
+        {/* Serendipity pins layer — must be inside LeafletMap */}
+        <SerendipityPin
+          pins={serendipityPins}
+          onPinClick={(pin) => setSelectedSerendipityPin(pin)}
+        />
       </LeafletMap>
+
+      {/* Serendipity card — outside LeafletMap, fixed overlay */}
+      {selectedSerendipityPin && (
+        <SerendipityCard
+          pin={selectedSerendipityPin}
+          skipsRemaining={skipsRemaining}
+          onSkip={onSkipSerendipity}
+          onReveal={(pin) => console.log('Revealed:', pin.name)}
+          onClose={() => setSelectedSerendipityPin(null)}
+          isDark={isDark}
+        />
+      )}
     </div>
   )
 }

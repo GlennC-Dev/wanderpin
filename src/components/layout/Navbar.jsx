@@ -9,7 +9,7 @@ const PATH_COLORS = [
   { label: 'Blue', value: '#3b82f6' },
 ]
 
-export default function Navbar({ session, onResetHomeBase, activeTab, setActiveTab, isEditingPath, activePath, onDoneEditing, isDark, setIsDark, hideVisited, setHideVisited, pathColor, setPathColor, isDropMode, setIsDropMode }) {
+export default function Navbar({ session, onResetHomeBase, activeTab, setActiveTab, isEditingPath, activePath, onDoneEditing, isDark, setIsDark, hideVisited, setHideVisited, pathColor, setPathColor, isDropMode, setIsDropMode, onResetSerendipity }) {
   const [showSettings, setShowSettings] = useState(false)
 
   async function handleSignOut() {
@@ -255,7 +255,7 @@ export default function Navbar({ session, onResetHomeBase, activeTab, setActiveT
             </button>
           </div>
 
-          <div>
+          <div style={{ marginBottom: '16px' }}>
             <div style={{ fontSize: '12px', color: isDark ? '#94a3b8' : '#64748b', marginBottom: '8px' }}>
               PATH COLOR
             </div>
@@ -277,6 +277,32 @@ export default function Navbar({ session, onResetHomeBase, activeTab, setActiveT
                 />
               ))}
             </div>
+          </div>
+
+          <div>
+            <div style={{ fontSize: '12px', color: isDark ? '#94a3b8' : '#64748b', marginBottom: '8px' }}>
+              SERENDIPITY
+            </div>
+            <button
+              onClick={() => {
+                onResetSerendipity()
+                setShowSettings(false)
+              }}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                backgroundColor: isDark ? '#1e293b' : '#f8fafc',
+                color: isDark ? '#f1f5f9' : '#0f172a',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                fontSize: '13px',
+                textAlign: 'left',
+              }}
+            >
+              🎲 Reset Today's Serendipity
+            </button>
           </div>
         </div>
         </>

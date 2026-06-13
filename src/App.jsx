@@ -6,9 +6,13 @@ import Navbar from './components/layout/Navbar'
 import SetHomeBase from './components/onboarding/SetHomeBase'
 import { useHomeBase } from './hooks/useHomeBase'
 import { Paths } from './pages/Paths'
+import { usePinState } from './hooks/usePinState'
+import { useUserLocation } from './hooks/useUserLocation'
+import { useSerendipity } from './hooks/useSerendipity'
 
 function AppInner({ session }) {
   const { homeBase, loading, saveHomeBase, clearHomeBase } = useHomeBase(session.user.id)
+  const { pinStates, setPinState, pinStateRows } = usePinState(session.user.id)
   const [activeTab, setActiveTab] = useState('map')
   const [activePath, setActivePath] = useState(null)
   const [isEditingPath, setIsEditingPath] = useState(false)
@@ -29,7 +33,16 @@ function AppInner({ session }) {
   useEffect(() => { localStorage.setItem('wp_isDark', isDark) }, [isDark])
   useEffect(() => { localStorage.setItem('wp_hideVisited', hideVisited) }, [hideVisited])
   useEffect(() => { localStorage.setItem('wp_pathColor', pathColor) }, [pathColor])
+
   const [isDropMode, setIsDropMode] = useState(false)
+
+  const { location: userLocation } = useUserLocation()
+
+  const { activePins, skipsRemaining, skipPin, resetToday } = useSerendipity({
+    userLocation,
+    activePath,
+    pinStateRows,
+  })
 
   function handleEditPath(path) {
     setActivePath(path)
@@ -73,6 +86,7 @@ function AppInner({ session }) {
         setPathColor={setPathColor}
         isDropMode={isDropMode}
         setIsDropMode={setIsDropMode}
+        onResetSerendipity={resetToday}
       />
       {activeTab === 'map' && (
         <MapContainer
@@ -85,6 +99,11 @@ function AppInner({ session }) {
           pathColor={pathColor}
           isDropMode={isDropMode}
           setIsDropMode={setIsDropMode}
+          pinStates={pinStates}
+          setPinState={setPinState}
+          serendipityPins={activePins}
+          skipsRemaining={skipsRemaining}
+          onSkipSerendipity={skipPin}
         />
       )}
       {activeTab === 'paths' && (
@@ -94,7 +113,6 @@ function AppInner({ session }) {
           setActivePath={setActivePath}
           onEditPath={handleEditPath}
           isDark={isDark}
-
         />
       )}
     </div>
