@@ -202,36 +202,44 @@ export default function SetHomeBase({ onSave }) {
           <LocationPicker onPick={handlePick} />
 
           {hotels.map((hotel) => (
-            <Marker
-              key={hotel.id}
-              position={[hotel.lat, hotel.lng]}
-              icon={createHotelIcon()}
-            >
-              <Popup>
-                <div style={{ minWidth: '160px' }}>
-                  <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>
-                    🏨 {hotel.name}
-                  </div>
-                  <button
-                    onClick={() => handlePick(hotel.lat, hotel.lng, hotel.name)}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      background: '#1d4ed8',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontWeight: 'bold',
-                      fontSize: '13px',
-                    }}
-                  >
-                    🏠 Set as Home Base
-                  </button>
+          <Marker
+            key={hotel.id}
+            position={[hotel.lat, hotel.lng]}
+            icon={createHotelIcon()}
+            ref={(ref) => ref}
+          >
+            <Popup>
+              <div style={{ minWidth: '160px' }}>
+                <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>
+                  🏨 {hotel.name}
                 </div>
-              </Popup>
-            </Marker>
-          ))}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handlePick(hotel.lat, hotel.lng, hotel.name)
+                    // Close the popup by blurring
+                    e.target.closest('.leaflet-popup')
+                      ?.querySelector('.leaflet-popup-close-button')
+                      ?.click()
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    background: '#1d4ed8',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    fontSize: '13px',
+                  }}
+                >
+                  🏠 Set as Home Base
+                </button>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
 
           {picked && (
             <Marker
@@ -243,14 +251,19 @@ export default function SetHomeBase({ onSave }) {
       </div>
 
       {picked && (
-        <div style={{
-          padding: '16px 20px',
-          background: 'white',
-          boxShadow: '0 -2px 8px rgba(0,0,0,0.1)',
-          display: 'flex',
-          gap: '12px',
-          alignItems: 'center',
-        }}>
+          <div style={{
+            padding: '16px 20px',
+            background: 'white',
+            boxShadow: '0 -2px 8px rgba(0,0,0,0.1)',
+            display: 'flex',
+            gap: '12px',
+            alignItems: 'center',
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 2000,
+          }}>
           <input
             type="text"
             placeholder="Name it (e.g. My Hotel)"
