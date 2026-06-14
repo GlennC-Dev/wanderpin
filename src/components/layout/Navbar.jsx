@@ -285,8 +285,10 @@ export default function Navbar({ session, onResetHomeBase, activeTab, setActiveT
             </div>
             <button
               onClick={() => {
-                onResetSerendipity()
-                setShowSettings(false)
+                if (confirm("Reset today's serendipity? This clears your skips and starts fresh.")) {
+                  onResetSerendipity()
+                  setShowSettings(false)
+                }
               }}
               style={{
                 width: '100%',
