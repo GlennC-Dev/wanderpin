@@ -54,3 +54,19 @@ export async function fetchPinsByBounds(category, bounds) {
   const elements = await queryOverpass(query)
   return parseElements(elements, category)
 }
+
+// Serendipity mode — multiple tag filters in one radius query
+export async function fetchPinsByRadiusMultiTag(tagQueries, lat, lng, radiusMeters = 200) {
+  const filters = tagQueries
+    .map((tag) => `node[${tag}](around:${radiusMeters},${lat},${lng});`)
+    .join('\n')
+  const query = `
+    [out:json][timeout:25];
+    (
+      ${filters}
+    );
+    out body;
+  `
+  const elements = await queryOverpass(query)
+  return elements
+}

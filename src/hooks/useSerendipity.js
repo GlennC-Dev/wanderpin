@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { selectSerendipityPins, getTodayString } from '../lib/serendipity'
 import { hasMovedSignificantly } from '../lib/geo'
+import { fetchPinsByRadiusMultiTag } from '../lib/overpass'
 
 const MAX_SKIPS_PER_CYCLE = 3
 
@@ -49,40 +50,33 @@ export function useSerendipity({ userLocation, activePath, pinStateRows }) {
     return 'landmarks' // sensible fallback for other tourism tags
   }
 
-  const fetchCandidates = useCallback(async (lat, lng) => {
-    setIsLoading(true)
-    try {
-      const radius = 200
-      const query = `
-        [out:json][timeout:10];
-        (
-          node["amenity"~"restaurant|cafe|bar"](around:${radius},${lat},${lng});
-          node["tourism"~"attraction|hotel"](around:${radius},${lat},${lng});
-          node["shop"~"convenience|department_store|gift"](around:${radius},${lat},${lng});
-        );
-        out body;
-      `
-      const res = await fetch('https://overpass-api.de/api/interpreter', {
-        method: 'POST',
-        body: query,
-      })
-      const json = await res.json()
-      const pins = (json.elements || [])
-        .filter((el) => el.tags?.name)
-        .map((el) => ({
-          osm_id: String(el.id),
-          name: el.tags.name,
-          lat: el.lat,
-          lng: el.lon,
-          category: inferCategory(el.tags),
-        }))
-      setCandidatePool(pins)
-    } catch (e) {
-      console.error('Serendipity Overpass fetch failed:', e)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+
+const fetchCandidates = useCallback(async (lat, lng) => {
+  setIsLoading(true)
+  try {
+    const tagQueries = [
+      '"amenity"~"restaurant|cafe|bar"',
+      '"tourism"~"attraction|hotel"',
+      '"shop"~"convenience|department_store|gift"',
+    ]
+    const elements = await fetchPinsByRadiusMultiTag(tagQueries, lat, lng, 200)
+    const pins = elements
+      .filter((el) => el.tags?.name)
+      .map((el) => ({
+        osm_id: String(el.id),
+        name: el.tags.name,
+        lat: el.lat,
+        lng: el.lon,
+        category: inferCategory(el.tags),
+      }))
+    setCandidatePool(pins)
+    console.log('Serendipity candidates found:', pins.length, pins)
+  } catch (e) {
+    console.error('Serendipity fetch failed:', e)
+  } finally {
+    setIsLoading(false)
+  }
+}, [])
 
   useEffect(() => {
     if (!userLocation) return
